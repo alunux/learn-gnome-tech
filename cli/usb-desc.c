@@ -140,16 +140,12 @@ usb_desc_class_init(UsbDescClass* klass)
                           NULL,
                           (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-    g_object_class_install_property(obj_class, PROP_NAME, properties[PROP_NAME]);
-
     properties[PROP_IDVENDOR] =
       g_param_spec_string("id-vendor",
                           "idVendor",
                           "The Vendor ID of the USB device",
                           NULL,
                           (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
-
-    g_object_class_install_property(obj_class, PROP_IDVENDOR, properties[PROP_IDVENDOR]);
 
     properties[PROP_IDPRODUCT] =
       g_param_spec_string("id-product",
@@ -158,16 +154,12 @@ usb_desc_class_init(UsbDescClass* klass)
                           NULL,
                           (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-    g_object_class_install_property(obj_class, PROP_IDPRODUCT, properties[PROP_IDPRODUCT]);
-
     properties[PROP_MANUFACTURER] =
       g_param_spec_string("manufacturer",
                           "Manufacturer",
                           "The manufacturer of the USB device",
                           NULL,
                           (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
-
-    g_object_class_install_property(obj_class, PROP_MANUFACTURER, properties[PROP_MANUFACTURER]);
 
     properties[PROP_BUSID] =
       g_param_spec_string("busid",
@@ -176,16 +168,12 @@ usb_desc_class_init(UsbDescClass* klass)
                           NULL,
                           (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-    g_object_class_install_property(obj_class, PROP_BUSID, properties[PROP_BUSID]);
-
     properties[PROP_NODE] =
       g_param_spec_string("node-addr",
                           "NodeAddr",
                           "The IP address of the USB device",
                           NULL,
                           (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
-
-    g_object_class_install_property(obj_class, PROP_NODE, properties[PROP_NODE]);
 
     properties[PROP_STATE] =
       g_param_spec_boolean("state",
@@ -194,8 +182,7 @@ usb_desc_class_init(UsbDescClass* klass)
                            TRUE,
                            (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-    g_object_class_install_property(obj_class, PROP_STATE, properties[PROP_STATE]);
-    // g_object_class_install_property(obj_class, LAST_PROP, properties);
+    g_object_class_install_properties(obj_class, LAST_PROP, properties);
 }
 
 const gchar*
