@@ -59,6 +59,7 @@ usbip_app_win_init(UsbipAppWin *app)
     UsbipAppWin *win = USBIP_APP_WIN(gtk_widget_get_toplevel(GTK_WIDGET(app)));
     UsbipAppWinPrivate *self = usbip_app_win_get_instance_private(win);
 
+    self->devs = NULL;
     gtk_widget_init_template(GTK_WIDGET(app));
     gtk_list_box_set_placeholder(GTK_LIST_BOX(self->list_dev), usbip_app_win_empty());
 }
@@ -136,7 +137,7 @@ create_usbip_entry(UsbDesc *dev)
 }
 
 static const gchar*
-query_usb_id(json_object* root, const gchar* key)
+query_usb_id(json_object *root, const gchar *key)
 {
     json_object* ret_val;
 
@@ -187,16 +188,18 @@ done:
 }
 
 static void
-usbip_app_win_finalize(GObject* obj)
+usbip_app_win_finalize(GObject *obj)
 {
     UsbipAppWinPrivate *self = usbip_app_win_get_instance_private(USBIP_APP_WIN(obj));
 
-    g_list_free_full(self->devs, g_object_unref);
+    if (self->devs != NULL)
+        g_list_free_full(self->devs, g_object_unref);
+
     G_OBJECT_CLASS(usbip_app_win_parent_class)->finalize(obj);
 }
 
 static void
-usbip_app_win_class_init(UsbipAppWinClass* class)
+usbip_app_win_class_init(UsbipAppWinClass *class)
 {
     G_OBJECT_CLASS(class)->finalize = usbip_app_win_finalize;
 
@@ -208,7 +211,7 @@ usbip_app_win_class_init(UsbipAppWinClass* class)
 }
 
 UsbipAppWin*
-usbip_app_win_new(UsbipApp* self)
+usbip_app_win_new(UsbipApp *self)
 {
     return g_object_new(USBIP_APP_WIN_TYPE, "application", self, NULL);
 }
