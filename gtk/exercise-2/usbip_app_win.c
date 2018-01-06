@@ -127,18 +127,31 @@ query_usb_id(json_object *root, const gchar *key)
 }
 
 static void
-usbip_app_win_refresh_list(UsbipAppWin *app)
+refresh_list_thread(GTask *task,
+                    __attribute__((unused)) gpointer obj,
+                    __attribute__((unused)) gpointer data,
+                    __attribute__((unused)) GCancellable *cancel)
 {
+    json_object *usb_list = get_devices();
+    g_task_return_pointer(task, usb_list, (GDestroyNotify) json_object_put);
+}
+
+static void
+usbip_app_win_refresh_list_done(GObject *app,
+                                GAsyncResult *res,
+                                __attribute__((unused)) gpointer data)
+{
+    g_return_if_fail (g_task_is_valid (res, app));
+
     UsbipAppWin *win = USBIP_APP_WIN(gtk_widget_get_toplevel(GTK_WIDGET(app)));
     UsbipAppWinPrivate *self = usbip_app_win_get_instance_private(win);
 
-    json_object *usb_list, *iter;
-    usb_list = get_devices();
-
+    json_object *usb_list = g_task_propagate_pointer(G_TASK(res), NULL);
     if (!json_object_object_length(usb_list)) {
         goto done;
     }
 
+    json_object *iter;
     json_object_object_foreach(usb_list, nodes, devices)
     {
         (void)(nodes);
@@ -164,6 +177,20 @@ usbip_app_win_refresh_list(UsbipAppWin *app)
     }
 done:
     json_object_put(usb_list);
+    gtk_widget_set_sensitive(self->button_add_dev, TRUE);
+}
+
+static void
+usbip_app_win_refresh_list(UsbipAppWin *app)
+{
+    UsbipAppWin *win = USBIP_APP_WIN(gtk_widget_get_toplevel(GTK_WIDGET(app)));
+    UsbipAppWinPrivate *self = usbip_app_win_get_instance_private(win);
+
+    gtk_widget_set_sensitive(self->button_add_dev, FALSE);
+
+    GTask *task = g_task_new(app, NULL, usbip_app_win_refresh_list_done, NULL);
+    g_task_run_in_thread(task, refresh_list_thread);
+    g_object_unref (task);
 }
 
 static void
