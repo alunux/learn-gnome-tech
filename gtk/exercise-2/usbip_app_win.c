@@ -82,14 +82,14 @@ static GtkWidget*
 create_usbip_entry(UsbDesc *dev)
 {   
     g_autofree gchar *devs_desc =
-      g_strdup_printf("<b>%s</b>\nidVendor: %s\nidProduct: %s\nManufacturer: "
-                      "%s\nBUSID: %s\nNode: %s\n",
-                      usb_desc_get_name(dev),
-                      usb_desc_get_idvendor(dev),
-                      usb_desc_get_idproduct(dev),
-                      usb_desc_get_manufacturer(dev),
-                      usb_desc_get_busid(dev),
-                      usb_desc_get_node_addr(dev));
+        g_strdup_printf("<b>%s</b>\nidVendor: %s\nidProduct: %s\nManufacturer: "
+                        "%s\nBUSID: %s\nNode: %s\n",
+                        usb_desc_get_name(dev),
+                        usb_desc_get_idvendor(dev),
+                        usb_desc_get_idproduct(dev),
+                        usb_desc_get_manufacturer(dev),
+                        usb_desc_get_busid(dev),
+                        usb_desc_get_node_addr(dev));
 
 #define WIDGET_FROM_BUILDER(x ,y) (GTK_WIDGET (gtk_builder_get_object (x, y)))
 
