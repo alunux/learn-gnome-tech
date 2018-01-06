@@ -202,6 +202,26 @@ usb_desc_class_init(UsbDescClass* klass)
     g_object_class_install_properties(obj_class, LAST_PROP, properties);
 }
 
+void
+usb_desc_print(UsbDesc *self)
+{
+    g_return_if_fail(USB_IS_DESC(self));
+    g_print("Name: %s\n"
+            "idVendor: %s\n"
+            "idProduct: %s\n"
+            "Manufacturer: %s\n"
+            "BUSID: %s\n"
+            "Node: %s\n"
+            "State: %s\n\n",
+            self->name,
+            self->idvendor,
+            self->idproduct,
+            self->manufacturer,
+            self->busid,
+            self->node_addr,
+            (self->state == TRUE) ? "Attachable" : "Detachable");
+}
+
 const gchar*
 usb_desc_get_name(UsbDesc* self)
 {

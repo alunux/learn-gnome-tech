@@ -26,6 +26,8 @@ G_DECLARE_FINAL_TYPE(UsbDesc, usb_desc, USB, DESC, GObject)
 UsbDesc*
 usb_desc_new(void);
 
+void
+usb_desc_print(UsbDesc *self);
 const gchar*
 usb_desc_get_name(UsbDesc* self);
 const gchar*
