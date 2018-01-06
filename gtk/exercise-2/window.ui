@@ -53,12 +53,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="receives_default">False</property>
-            <signal name="clicked" handler="usbip_app_win_append_list" swapped="no"/>
+            <signal name="clicked" handler="usbip_app_win_refresh_list" swapped="no"/>
             <child>
               <object class="GtkImage" id="scan_icon">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="icon_name">contact-new</property>
+                <property name="icon_name">view-refresh-symbolic</property>
                 <property name="icon_size">1</property>
               </object>
             </child>

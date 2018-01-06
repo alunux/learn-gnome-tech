@@ -33,21 +33,20 @@ struct _UsbipAppWinPrivate {
     GtkWidget *win_scroll;
     GtkWidget *list_dev;
     GtkWidget *button_add_dev;
+    GList     *devs;
 };
 
-G_DEFINE_TYPE_WITH_PRIVATE(UsbipAppWin,
-                           usbip_app_win,
-                           GTK_TYPE_APPLICATION_WINDOW)
+G_DEFINE_TYPE_WITH_PRIVATE(UsbipAppWin, usbip_app_win, GTK_TYPE_APPLICATION_WINDOW)
 
 static GtkWidget*
 usbip_app_win_empty(void)
 {
-    gchar* no_mess = g_strdup("<span size=\"x-large\">There are no USB devices "
-                              "found\nin your area . . .</span>");
+    g_autofree gchar *no_mess = NULL;
+    no_mess = g_strdup("<span size=\"x-large\">There are no USB devices "
+                       "found\nin your area . . .</span>");
 
     GtkWidget *label = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(label), no_mess);
-    g_free(no_mess);
     gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
     gtk_widget_show(label);
 
@@ -65,17 +64,21 @@ usbip_app_win_init(UsbipAppWin *app)
 }
 
 static void
-usbip_state_changed(GtkWidget *usb_state, __attribute__((unused)) gpointer data)
+usbip_state_changed(GtkWidget *usb_state, UsbDesc *dev)
 {
     if (!g_strcmp0(gtk_button_get_label(GTK_BUTTON(usb_state)), "Attach")) {
         gtk_button_set_label(GTK_BUTTON(usb_state), "Detach");
+        usb_desc_set_state(dev, FALSE);
+        usb_desc_print(dev);
     } else {
         gtk_button_set_label(GTK_BUTTON(usb_state), "Attach");
+        usb_desc_set_state(dev, TRUE);
+        usb_desc_print(dev);
     }
 }
 
 static GtkWidget*
-create_usbip_entry(UsbDesc *fd_toshiba)
+create_usbip_entry(UsbDesc *dev)
 {   
     g_autofree gchar *name = NULL;
     g_autofree gchar *idvendor = NULL;
@@ -92,7 +95,7 @@ create_usbip_entry(UsbDesc *fd_toshiba)
     GtkWidget *usb_info;
     GtkWidget *usb_state;
 
-    g_object_get(fd_toshiba,
+    g_object_get(dev,
                  "name", &name,
                  "id-vendor", &idvendor,
                  "id-product", &idproduct,
@@ -121,7 +124,7 @@ create_usbip_entry(UsbDesc *fd_toshiba)
     
     usb_state = GTK_WIDGET(gtk_builder_get_object(usb_entry_builder, "button"));
     gtk_button_set_label(GTK_BUTTON(usb_state), (state == TRUE) ? "Attach" : "Detach");
-    g_signal_connect (usb_state, "clicked", G_CALLBACK (usbip_state_changed), NULL);
+    g_signal_connect (usb_state, "clicked", G_CALLBACK (usbip_state_changed), dev);
     
     usb_entry_box = GTK_WIDGET(gtk_builder_get_object(usb_entry_builder, "box"));
     gtk_container_add (GTK_CONTAINER (usb_entry_row), usb_entry_box);
@@ -144,7 +147,7 @@ query_usb_id(json_object* root, const gchar* key)
 }
 
 static void
-usbip_app_win_append_list(UsbipAppWin *app)
+usbip_app_win_refresh_list(UsbipAppWin *app)
 {
     UsbipAppWin *win = USBIP_APP_WIN(gtk_widget_get_toplevel(GTK_WIDGET(app)));
     UsbipAppWinPrivate *self = usbip_app_win_get_instance_private(win);
@@ -163,18 +166,18 @@ usbip_app_win_append_list(UsbipAppWin *app)
             for (int i = 0; i < json_object_array_length(devices); i++) {
                 iter = json_object_array_get_idx(devices, i);
 
-                g_autoptr(UsbDesc) fd_toshiba = NULL;
-                fd_toshiba = g_object_new(USB_TYPE_DESC,
-                                         "name", query_usb_id(iter, "product"),
-                                         "id-vendor", query_usb_id(iter, "idVendor"),
-                                         "id-product", query_usb_id(iter, "idProduct"),
-                                         "manufacturer", query_usb_id(iter, "manufact"),
-                                         "busid", query_usb_id(iter, "busid"),
-                                         "node-addr", "127.0.0.1",
-                                         "state", TRUE,
-                                         NULL);
-
-                GtkWidget *usb_entry_row =  create_usbip_entry(fd_toshiba);
+                UsbDesc *dev = g_object_new(USB_TYPE_DESC,
+                                            "name", query_usb_id(iter, "product"),
+                                            "id-vendor", query_usb_id(iter, "idVendor"),
+                                            "id-product", query_usb_id(iter, "idProduct"),
+                                            "manufacturer", query_usb_id(iter, "manufact"),
+                                            "busid", query_usb_id(iter, "busid"),
+                                            "node-addr", "127.0.0.1",
+                                            "state", TRUE,
+                                            NULL);
+                
+                self->devs = g_list_append(self->devs, dev);
+                GtkWidget *usb_entry_row =  create_usbip_entry(dev);
                 gtk_container_add (GTK_CONTAINER (self->list_dev), usb_entry_row);
             }
         }
@@ -186,6 +189,9 @@ done:
 static void
 usbip_app_win_finalize(GObject* obj)
 {
+    UsbipAppWinPrivate *self = usbip_app_win_get_instance_private(USBIP_APP_WIN(obj));
+
+    g_list_free_full(self->devs, g_object_unref);
     G_OBJECT_CLASS(usbip_app_win_parent_class)->finalize(obj);
 }
 
@@ -197,7 +203,7 @@ usbip_app_win_class_init(UsbipAppWinClass* class)
     gtk_widget_class_set_template_from_resource(GTK_WIDGET_CLASS(class), "/org/alunux/usbipapp/window.ui");
     gtk_widget_class_bind_template_child_private(GTK_WIDGET_CLASS(class), UsbipAppWin, win_scroll);
     gtk_widget_class_bind_template_child_private(GTK_WIDGET_CLASS(class), UsbipAppWin, button_add_dev);
-    gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(class), usbip_app_win_append_list);
+    gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(class), usbip_app_win_refresh_list);
     gtk_widget_class_bind_template_child_private(GTK_WIDGET_CLASS(class), UsbipAppWin, list_dev);
 }
 
