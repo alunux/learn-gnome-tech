@@ -127,6 +127,12 @@ query_usb_id(json_object *root, const gchar *key)
 }
 
 static void
+clear_list_dev(GtkWidget *row, __attribute__((unused)) gpointer data)
+{
+    gtk_widget_destroy(row);
+}
+
+static void
 refresh_list_thread(GTask *task,
                     __attribute__((unused)) gpointer obj,
                     __attribute__((unused)) gpointer data,
@@ -141,7 +147,7 @@ usbip_app_win_refresh_list_done(GObject *app,
                                 GAsyncResult *res,
                                 __attribute__((unused)) gpointer data)
 {
-    g_return_if_fail (g_task_is_valid (res, app));
+    g_return_if_fail (g_task_is_valid(res, app));
 
     UsbipAppWin *win = USBIP_APP_WIN(gtk_widget_get_toplevel(GTK_WIDGET(app)));
     UsbipAppWinPrivate *self = usbip_app_win_get_instance_private(win);
@@ -150,6 +156,8 @@ usbip_app_win_refresh_list_done(GObject *app,
     if (!json_object_object_length(usb_list)) {
         goto done;
     }
+
+    gtk_container_foreach(GTK_CONTAINER(self->list_dev), (GtkCallback) clear_list_dev, NULL);
 
     json_object *iter;
     json_object_object_foreach(usb_list, nodes, devices)
@@ -171,7 +179,7 @@ usbip_app_win_refresh_list_done(GObject *app,
                 
                 self->devs = g_list_append(self->devs, dev);
                 GtkWidget *usb_entry_row =  create_usbip_entry(dev);
-                gtk_container_add (GTK_CONTAINER (self->list_dev), usb_entry_row);
+                gtk_container_add (GTK_CONTAINER(self->list_dev), usb_entry_row);
             }
         }
     }
