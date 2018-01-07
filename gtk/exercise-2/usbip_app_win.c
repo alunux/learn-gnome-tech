@@ -198,7 +198,7 @@ usbip_app_win_refresh_list(UsbipAppWin *app)
 
     GTask *task = g_task_new(app, NULL, usbip_app_win_refresh_list_done, NULL);
     g_task_run_in_thread(task, refresh_list_thread);
-    g_object_unref (task);
+    g_object_unref(task);
 }
 
 static void
